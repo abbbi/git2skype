@@ -11,12 +11,12 @@ SKYPE_CHAT = "chat_topic"
 BUGZILLA_URL = "http://bugzilla_url/show_bug.cgi?id="
 GITWEB_URL = "http://gitweb_url/git/?p=sesam/src;a=commitdiff;h="
 
-logging.basicConfig(format="%(levelname)s:%(message)s")
+logging.basicConfig(format="Skypebot:%(levelname)s:%(message)s")
 
 try:
     sk = Skype(SKYPE_USER, SKYPE_PASSWORD)
 except Exception as e:
-    logging.warning("Skypebot: login failed: [%s]", e)
+    logging.warning("login failed: [%s]", e)
     raise SystemExit
 
 chatId = None
@@ -27,7 +27,7 @@ for chat in sk.chats.recent():
         break
 
 if not chatId:
-    logging.warning("Skypebot: unable to find group chat with name [%s]", SKYPE_CHAT)
+    logging.warning("unable to find group chat with name [%s]", SKYPE_CHAT)
     raise SystemExit
 
 ch = sk.chats[chatId]
