@@ -31,3 +31,4 @@ $GITDIR/hooks/post-receive
 
 6) Push your changes and watch the bot reporting like so:
 
+![screenshot](skypebot.jpg?raw=true "Thebot")
