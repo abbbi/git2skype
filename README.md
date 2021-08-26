@@ -4,13 +4,13 @@ Send your git commits to skype group chats
 The [SkPy](https://github.com/Terrance/SkPy) Project provides a neat little python SDK around the skype messaging API. 
 
 Using this API, its quite simple to create a small bot that sends your
-development groups commits to a skype group.  Even tho it is 2021, there are
-still People around that stick to old fashioned
-software components, and may use bugzilla or gitweb to manage their things.
+development groups commits to your favourite Skype group.  Even tho it is 2021, there are
+still people around that may stick to old fashioned
+messaging services. .. ;)
 
 The Example provided in this repository is a small bot that sends the latest
-commits created to a repository to a skype group, replaces ticket numbers with
-urls and is quite friendly ;)
+commits created to a repository to the configured Skype group, replaces ticket numbers with
+urls and tries to be friendly ;)
 
 # HOWTO
 
