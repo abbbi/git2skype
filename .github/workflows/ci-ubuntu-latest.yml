@@ -1,0 +1,13 @@
+name: black 
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+        sudo pip3 install black
+        black --check skype-notification

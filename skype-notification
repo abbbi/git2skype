@@ -1,0 +1,111 @@
+#!/usr/bin/python3
+import sys
+import re
+import subprocess
+import logging
+from skpy import Skype, SkypeMsg
+
+SKYPE_USER = "skype_user"
+SKYPE_PASSWORD = "skype_pass"
+SKYPE_CHAT = "chat_topic"
+BUGZILLA_URL = "http://bugzilla_url/show_bug.cgi?id="
+GITWEB_URL = "http://gitweb_url/git/?p=sesam/src;a=commitdiff;h="
+
+logging.basicConfig(format="%(levelname)s:%(message)s")
+
+try:
+    sk = Skype(SKYPE_USER, SKYPE_PASSWORD)
+except Exception as e:
+    logging.warning("Skypebot: login failed: [%s]", e)
+    raise SystemExit
+
+chatId = None
+for chat in sk.chats.recent():
+    chObj = sk.chats[chat]
+    if chObj.topic == SKYPE_CHAT:
+        chatId = chObj.id
+        break
+
+if not chatId:
+    logging.warning("Skypebot: unable to find group chat with name [%s]", SKYPE_CHAT)
+    raise SystemExit
+
+ch = sk.chats[chatId]
+
+(oldrev, newrev, branch) = sys.stdin.read().split()
+
+try:
+    branch = branch.split("/")[-1]
+except:
+    branch = "unknown"
+
+# receive latest commit once with and without stat,
+try:
+    logStat = subprocess.run(
+        ["git", "log", "-1", "--stat", "--pretty=format:'%h %cn: %s%b'", newrev],
+        capture_output=True,
+    )
+    logPlain = subprocess.run(
+        ["git", "log", "-1", "--pretty=format:'%h %cn: %s%b'", newrev],
+        capture_output=True,
+    )
+except Exception as e:
+    logging.warning("Unable to get latest git message, skip skype notification: %s", e)
+    raise SystemExit
+
+# if too many files have changed, post only commit message
+# otherwise include stats
+if "files changed" in logStat.stdout.decode():
+    try:
+        m = re.search("(\d+) files changed", logStat.stdout.decode())
+        filecnt = int(m.group(1))
+        if filecnt >= 5:
+            log = logPlain
+        else:
+            log = logStat
+    except:
+        log = logPlain
+else:
+    log = logStat
+
+msg = log.stdout.decode().replace("BUGFIX", SkypeMsg.bold("BUGFIX"))
+
+# provide bug to gitzilla if bug id is mentioned in commit
+# message
+if "#" in msg:
+    try:
+        m = re.search("#(\d+)", msg)
+        bugid = m.group(1)
+        msg = msg.replace(
+            m.group(1),
+            SkypeMsg.link("%s%s" % (BUGZILLA_URL, bugid), bugid),
+        )
+    except:
+        pass
+
+# add link to gitweb commitdiff
+msg = "%s %s" % (
+    msg,
+    SkypeMsg.link("%s%s" % (GITWEB_URL, newrev), "[Diff]"),
+)
+
+
+# be kind and send some emoticons if people fix things
+if "bugfix" in msg.lower() and not "revert" in msg.lower():
+    pre = "New Bugfix"
+    msg = "%s %s" % (msg, SkypeMsg.emote("8-)"))
+else:
+    pre = "New commit"
+
+if "revert" in msg.lower():
+    pre = "Revert"
+    msg = "%s %s" % (msg, SkypeMsg.emote(":'("))
+
+if "new:" in msg.lower():
+    pre = "New Feature"
+    msg = "%s %s" % (msg, SkypeMsg.emote("(like)"))
+
+try:
+    ch.sendMsg("%s: [%s]: %s" % (pre, SkypeMsg.italic(branch), msg), rich=True)
+except Exception as e:
+    logging.warning("Skipping skype notification: %s", e)
