@@ -9,6 +9,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      runs: |
+    - name: check code format
+      run: |
         sudo pip3 install black
         black --check skype-notification
